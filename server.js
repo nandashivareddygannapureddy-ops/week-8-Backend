@@ -41,19 +41,12 @@ const connectDB = async () => {
     }
 };
 
-// Only listen if not running as a Vercel serverless function
-if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    connectDB().then(() => {
-        const port = process.env.PORT || 4000;
-        app.listen(port, () =>
-            console.log(`Server started on port ${port}`)
-        );
-    });
-} else {
-    // On Vercel, we just ensure DB is connected
-    connectDB();
-}
-
+connectDB().then(() => {
+    const port = process.env.PORT || 4000;
+    app.listen(port, () =>
+        console.log(`Server started on port ${port}`)
+    );
+});
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error("Server Error:", err);
