@@ -27,26 +27,10 @@ app.get("/", (req, res) => {
     res.send("User Management API is running...");
 });
 
-// Connect DB
-const connectDB = async () => {
-    try {
-        if (process.env.DB_URL) {
-            await connect(process.env.DB_URL);
-            console.log("DB connection success");
-        } else {
-            console.warn("DB_URL not found in environment variables");
-        }
-    } catch (err) {
-        console.error("Error in DB connection:", err);
-    }
-};
-
-connectDB().then(() => {
-    const port = process.env.PORT || 4000;
-    app.listen(port, () =>
-        console.log(`Server started on port ${port}`)
-    );
-});
+const port = process.env.PORT || 4000;
+app.listen(port, () =>
+    console.log(`Server started on port ${port}`)
+);
 // Global Error Handler
 app.use((err, req, res, next) => {
     console.error("Server Error:", err);

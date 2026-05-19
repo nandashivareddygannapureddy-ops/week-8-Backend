@@ -1,56 +1,69 @@
 import exp from "express";
-import { UserModel } from "../Models/UserModel.js";
-//create min-express app
-export const UserApp =exp.Router();
-//User API routes
+import crypto from "crypto";
 
+export const UserApp = exp.Router();
 
-//create User
-UserApp.post("/user",async(req,res)=>{
+// In-memory array to store users
+let usersArray = [];
 
-    //create new user
+// create User
+UserApp.post("/user", (req, res) => {
     const newUser = req.body;
-    //create new userdocument
-    const newUserDocument = new UserModel(newUser);
-
-    //save the user
-    await newUserDocument.save();
-    //send res
-    res.status(201).json({message:"User created successfully",user:newUserDocument})
-
-})
-//Read all Users
-UserApp.get("/user",async(req,res)=>{
-    //get all users
-    const users = await UserModel.find({status:true});
-    //send res
     
-    res.status(200).json({message:"Users fetched successfully",payload:users})
-})
-// Read user by ID
-UserApp.get("/user/:id", async (req, res) => {
-    const user = await UserModel.findById(req.params.id);
-    if (!user){
-        return res.status(404).json({ message: "User not found" });
+    // basic validation
+    if (!newUser.name || !newUser.email || !newUser.dateOfBirth) {
+        return res.status(400).json({ 
+            message: "Validation failed", 
+            errors: { message: "name, email, and dateOfBirth are required" } 
+        });
     }
-    res.status(200).json({ message: "User fetched successfully", payload:user });
+
+    // check if email already exists
+    const emailExists = usersArray.find(u => u.email === newUser.email && u.status !== false);
+    if (emailExists) {
+        return res.status(409).json({ message: "Duplicate field value" });
+    }
+
+    // add id and status
+    newUser.id = crypto.randomUUID();
+    newUser.status = true;
+
+    usersArray.push(newUser);
+    res.status(201).json({ message: "User created successfully", user: newUser });
 });
 
-  // Delete user by ID  (soft delete)
-UserApp.delete("/user/:id", async (req, res) => {
-    let user = await UserModel.findByIdAndUpdate(req.params.id, { status: false });
+// Read all Users
+UserApp.get("/user", (req, res) => {
+    // get all active users
+    const activeUsers = usersArray.filter(u => u.status === true);
+    res.status(200).json({ message: "Users fetched successfully", payload: activeUsers });
+});
+
+// Read user by ID
+UserApp.get("/user/:id", (req, res) => {
+    const user = usersArray.find(u => u.id === req.params.id);
     if (!user) {
         return res.status(404).json({ message: "User not found" });
     }
+    res.status(200).json({ message: "User fetched successfully", payload: user });
+});
+
+// Delete user by ID (soft delete)
+UserApp.delete("/user/:id", (req, res) => {
+    const user = usersArray.find(u => u.id === req.params.id);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    user.status = false;
     res.status(200).json({ message: "User deleted successfully" });
 });
 
-//activate user (change status to true)
-UserApp.patch("/user/:id", async (req, res) => {
-    let user = await UserModel.findByIdAndUpdate(req.params.id, { status: true },{new:true});
-    res.status(200).json({ message: "User activated successfully",payload:user });
+// activate user (change status to true)
+UserApp.patch("/user/:id", (req, res) => {
+    const user = usersArray.find(u => u.id === req.params.id);
+    if (!user) {
+        return res.status(404).json({ message: "User not found" });
+    }
+    user.status = true;
+    res.status(200).json({ message: "User activated successfully", payload: user });
 });
-//PUT & PATCH
-
-
-//update user by id
