@@ -12,7 +12,7 @@ const app = exp();
 
 // Enable CORS
 app.use(cors({
-    origin: [process.env.FRONTEND_URL, "https://week-8-frontend-adexfz01i.vercel.app"],
+    origin: [process.env.FRONTEND_URL, /\.vercel\.app$/],
     credentials: true
 }));
 
